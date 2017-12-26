@@ -2,7 +2,7 @@
 
 RabbitMQ in Node.js without hating life.
 
-[![Build Status](https://travis-ci.org/pagerinc/jackrabbit.svg?branch=master)](https://travis-ci.org/pagerinc/jackrabbit)
+Forked to fix issues with reconnecting.
 
 ## Simple Example
 
@@ -32,6 +32,34 @@ rabbit
 function onMessage(data) {
   console.log('received:', data);
 }
+```
+
+*consumer-reconnecting.js:*
+
+```js
+var jackrabbit = require('jackrabbit');
+var rabbit = jackrabbit(process.env.RABBIT_URL);
+
+rabbit
+  .default()
+  .queue({ name: 'hello' })
+  .consume(onMessage, { noAck: true });
+
+function onMessage(data) {
+  console.log('received:', data);
+}
+
+var reconnecting_timeout = null;
+rabbit.on('error', (err) => {
+    if (err) console.log(`Rabbit error: ${err}`);
+    if (!reconnecting_timeout) {
+        console.log(`Pausing before reconnecting...`);
+        reconnecting_timeout = setTimeout(() => {
+            console.log(`Attempting to reconnect...`);
+            consume_ampq(queue_name, callback);
+        }, 5000);
+    }
+});
 ```
 
 ## Ack/Nack Consumer Example
