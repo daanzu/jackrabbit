@@ -92,7 +92,7 @@ which map 1-to-1 with the official RabbitMQ tutorials.
 ## Installation
 
 ```
-npm install --save @daanzu/jackrabbit
+npm install --save daanzu/jackrabbit
 ```
 
 ## Tests
