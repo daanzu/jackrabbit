@@ -9,7 +9,7 @@ RabbitMQ in Node.js without hating life.
 *producer.js:*
 
 ```js
-var jackrabbit = require('jackrabbit');
+var jackrabbit = require('@daanzu/jackrabbit');
 var rabbit = jackrabbit(process.env.RABBIT_URL);
 
 rabbit
@@ -21,7 +21,7 @@ rabbit
 *consumer.js:*
 
 ```js
-var jackrabbit = require('jackrabbit');
+var jackrabbit = require('@daanzu/jackrabbit');
 var rabbit = jackrabbit(process.env.RABBIT_URL);
 
 rabbit
@@ -37,35 +37,37 @@ function onMessage(data) {
 *consumer-reconnecting.js:*
 
 ```js
-var jackrabbit = require('jackrabbit');
-var rabbit = jackrabbit(process.env.RABBIT_URL);
-
-rabbit
-  .default()
-  .queue({ name: 'hello' })
-  .consume(onMessage, { noAck: true });
-
-function onMessage(data) {
-  console.log('received:', data);
-}
-
-var reconnecting_timeout = null;
-rabbit.on('error', (err) => {
+function consume_ampq (queue_name, callback) {
+  var jackrabbit = require('@daanzu/jackrabbit');
+  var rabbit = jackrabbit(process.env.RABBIT_URL);
+  rabbit
+    .default()
+    .queue({ name: queue_name, durable: true })
+    .consume((data, ack, nack, msg) => {
+      console.log(`Received data: ${data}`);
+      if (callback) callback(data);
+      ack();
+    });
+  let reconnecting_timeout = null;
+  rabbit.on('error', (err) => {
     if (err) console.log(`Rabbit error: ${err}`);
     if (!reconnecting_timeout) {
-        console.log(`Pausing before reconnecting...`);
-        reconnecting_timeout = setTimeout(() => {
-            console.log(`Attempting to reconnect...`);
-            consume_ampq(queue_name, callback);
-        }, 5000);
+      console.log(`Pausing before reconnecting...`);
+      reconnecting_timeout = setTimeout(() => {
+        console.log(`Attempting to reconnect...`);
+        consume_ampq(queue_name, callback);
+      }, 5000);
     }
-});
+  });
+  console.log(`Consuming ${queue_name}...`);
+}
+consume_ampq('hello', (data) => console.log('in callback'));
 ```
 
 ## Ack/Nack Consumer Example
 
 ```js
-var jackrabbit = require('jackrabbit');
+var jackrabbit = require('@daanzu/jackrabbit');
 var rabbit = jackrabbit(process.env.RABBIT_URL);
 
 rabbit
